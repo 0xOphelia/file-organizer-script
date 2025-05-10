@@ -8,6 +8,7 @@ import os
 import shutil
 from pathlib import Path
 import datetime
+import hashlib
 
 
 FILE_TYPES = {
@@ -51,6 +52,55 @@ def organize_by_type(source_dir):
                 print(f"Error moving {file_path.name}: {e}")
 
 
+def get_file_hash(file_path):
+    """Calculate MD5 hash of a file."""
+    hash_md5 = hashlib.md5()
+    with open(file_path, "rb") as f:
+        for chunk in iter(lambda: f.read(4096), b""):
+            hash_md5.update(chunk)
+    return hash_md5.hexdigest()
+
+
+def find_duplicates(source_dir):
+    """Find and handle duplicate files."""
+    source_path = Path(source_dir)
+    file_hashes = {}
+    duplicates = []
+    
+    for file_path in source_path.rglob('*'):
+        if file_path.is_file():
+            try:
+                file_hash = get_file_hash(file_path)
+                if file_hash in file_hashes:
+                    duplicates.append((file_path, file_hashes[file_hash]))
+                    print(f"Duplicate found: {file_path.name} == {file_hashes[file_hash].name}")
+                else:
+                    file_hashes[file_hash] = file_path
+            except Exception as e:
+                print(f"Error processing {file_path}: {e}")
+    
+    if duplicates:
+        duplicates_dir = source_path / "duplicates"
+        duplicates_dir.mkdir(exist_ok=True)
+        
+        for duplicate, _ in duplicates:
+            dest_path = duplicates_dir / duplicate.name
+            counter = 1
+            while dest_path.exists():
+                stem = duplicate.stem
+                suffix = duplicate.suffix
+                dest_path = duplicates_dir / f"{stem}_{counter}{suffix}"
+                counter += 1
+            
+            try:
+                shutil.move(str(duplicate), str(dest_path))
+                print(f"Moved duplicate {duplicate.name} to duplicates/")
+            except Exception as e:
+                print(f"Error moving duplicate {duplicate.name}: {e}")
+    
+    return len(duplicates)
+
+
 def organize_by_date(source_dir):
     """Organize files by their modification date."""
     source_path = Path(source_dir)
@@ -73,7 +123,7 @@ def organize_by_date(source_dir):
 
 
 def main():
-    print("File Organizer v0.2")
+    print("File Organizer v0.3")
     
     source_dir = input("Enter source directory path: ")
     if not os.path.exists(source_dir):
@@ -83,7 +133,8 @@ def main():
     print("Choose organization method:")
     print("1. By file type")
     print("2. By date")
-    choice = input("Enter choice (1 or 2): ")
+    print("3. Find duplicates")
+    choice = input("Enter choice (1, 2, or 3): ")
     
     print(f"Organizing files in: {source_dir}")
     
@@ -91,6 +142,9 @@ def main():
         organize_by_type(source_dir)
     elif choice == "2":
         organize_by_date(source_dir)
+    elif choice == "3":
+        dup_count = find_duplicates(source_dir)
+        print(f"Found and moved {dup_count} duplicate files")
     else:
         print("Invalid choice!")
         return
