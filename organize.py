@@ -9,23 +9,17 @@ import shutil
 from pathlib import Path
 import datetime
 import hashlib
+from config import load_config
 
 
-FILE_TYPES = {
-    'images': ['.jpg', '.jpeg', '.png', '.gif', '.bmp', '.tiff', '.svg'],
-    'documents': ['.pdf', '.doc', '.docx', '.txt', '.rtf', '.odt'],
-    'videos': ['.mp4', '.avi', '.mkv', '.mov', '.wmv', '.flv'],
-    'audio': ['.mp3', '.wav', '.flac', '.aac', '.ogg'],
-    'archives': ['.zip', '.rar', '.7z', '.tar', '.gz'],
-    'code': ['.py', '.js', '.html', '.css', '.cpp', '.java', '.c']
-}
-
-
-def get_file_category(file_path):
+def get_file_category(file_path, config=None):
     """Determine the category of a file based on its extension."""
+    if config is None:
+        config = load_config()
+    
     extension = Path(file_path).suffix.lower()
     
-    for category, extensions in FILE_TYPES.items():
+    for category, extensions in config["file_types"].items():
         if extension in extensions:
             return category
     
@@ -34,11 +28,12 @@ def get_file_category(file_path):
 
 def organize_by_type(source_dir):
     """Organize files by their type/extension."""
+    config = load_config()
     source_path = Path(source_dir)
     
     for file_path in source_path.iterdir():
         if file_path.is_file():
-            category = get_file_category(file_path)
+            category = get_file_category(file_path, config)
             
             category_dir = source_path / category
             category_dir.mkdir(exist_ok=True)
