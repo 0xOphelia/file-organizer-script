@@ -118,33 +118,60 @@ def organize_by_date(source_dir):
 
 
 def main():
-    print("File Organizer v0.3")
+    print("File Organizer v0.4")
+    print("=" * 30)
     
-    source_dir = input("Enter source directory path: ")
+    source_dir = input("Enter source directory path: ").strip()
+    if not source_dir:
+        print("No directory specified!")
+        return
+        
     if not os.path.exists(source_dir):
         print("Directory does not exist!")
         return
-    
-    print("Choose organization method:")
-    print("1. By file type")
-    print("2. By date")
-    print("3. Find duplicates")
-    choice = input("Enter choice (1, 2, or 3): ")
-    
-    print(f"Organizing files in: {source_dir}")
-    
-    if choice == "1":
-        organize_by_type(source_dir)
-    elif choice == "2":
-        organize_by_date(source_dir)
-    elif choice == "3":
-        dup_count = find_duplicates(source_dir)
-        print(f"Found and moved {dup_count} duplicate files")
-    else:
-        print("Invalid choice!")
+        
+    if not os.path.isdir(source_dir):
+        print("Path is not a directory!")
         return
     
-    print("Organization complete!")
+    print("\nChoose organization method:")
+    print("1. By file type")
+    print("2. By date") 
+    print("3. Find duplicates")
+    print("4. Exit")
+    
+    while True:
+        choice = input("\nEnter choice (1-4): ").strip()
+        
+        if choice == "4":
+            print("Goodbye!")
+            return
+            
+        if choice not in ["1", "2", "3"]:
+            print("Invalid choice! Please enter 1, 2, 3, or 4.")
+            continue
+            
+        break
+    
+    print(f"\nOrganizing files in: {source_dir}")
+    print("-" * 40)
+    
+    try:
+        if choice == "1":
+            organize_by_type(source_dir)
+        elif choice == "2":
+            organize_by_date(source_dir)
+        elif choice == "3":
+            dup_count = find_duplicates(source_dir)
+            print(f"\nFound and moved {dup_count} duplicate files")
+            
+        print("-" * 40)
+        print("Organization complete!")
+        
+    except KeyboardInterrupt:
+        print("\n\nOperation cancelled by user.")
+    except Exception as e:
+        print(f"\nError during organization: {e}")
 
 
 if __name__ == "__main__":
